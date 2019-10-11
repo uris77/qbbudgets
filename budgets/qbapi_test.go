@@ -3,24 +3,20 @@ package budgets
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
 	"math"
 	"testing"
 	"time"
+
+	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
-func TestGetBudgets(t *testing.T) {
-	want := 1
-	ticket := "9_bpmde6i39_b2wnjp_3bx_a_-b_cneu3jscrhgqy2cuubd3tcr54wadztvgzk87rga2c5zy8kkdrnqzbb_cgz2i5h"
-	resp := GetBudgets(ticket, "bg44v3kd9", 2, 0)
-	size := len(resp.Budgets)
+var sugar *zap.SugaredLogger
 
-	budget := resp.Budgets[0]
-	fmt.Printf("Billing Month: %s\n\n", budget.BillMonth)
-	if want != size {
-		t.Errorf("TestGetBudgets size = %d, expected %d", size, want)
-	}
+func init() {
+	sugar = zap.NewExample().Sugar()
+	defer sugar.Sync()
 }
 
 func TestUnmarshalBudget(t *testing.T) {
@@ -235,6 +231,7 @@ func TestUnmarshalBudget(t *testing.T) {
 	budgets := UnmarshalBudget(sample)
 	budget := budgets.Budgets[0]
 	fmt.Printf("\n\n Client Budget: %v\n", budget.ClientBudget)
+	sugar.Infow("Client Budget", "ClientBudget", budget.ClientBudget)
 	if budget.InitiativeBillable != true {
 		t.Errorf("Initiative Billable should be true, but got %v", budget.InitiativeBillable)
 	}
@@ -271,7 +268,6 @@ func TestCountQbBudgets(t *testing.T) {
 		t.Errorf("expected number of budgets to be greater than 0")
 	}
 
-
 	pages := math.Ceil(float64(cnt.Total) / 100)
 	log.Printf("Pages: %f | Total: %d", pages, cnt.Total)
 }
@@ -304,7 +300,6 @@ func TestEverything(t *testing.T) {
 		i++
 	}
 }
-
 
 func TestEpochToDate(t *testing.T) {
 	d := EpochToDate("1567296000000")

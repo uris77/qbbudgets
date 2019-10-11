@@ -3,7 +3,6 @@ package budgets
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"math"
 )
 
@@ -11,18 +10,18 @@ func byId(db *sql.DB, id int64) bool {
 	q := fmt.Sprintf("select id from quickbase_budgets where budget_id = %d", id)
 	rows, err := db.Query(q)
 	if err != nil {
-		log.Fatalf("Error happened while querying quickbase budgets by id(%d). Error: %v", id, err)
+		Logger.Fatalw("Error happened while querying quickbase budgets", "id", id, "error", err)
 	}
 
 	defer func() {
 		err := rows.Close()
 		if err != nil {
-			log.Fatalf("Error closing Query %v", err)
+			Logger.Fatalw("Error closing Query", "error", err, "query", q)
 		}
 	}()
 
 	exists := rows.Next()
-	log.Printf("Budget with id %d exists? %v", id, exists)
+	Logger.Debugw("Budget exists?", "id", id, "exists", exists)
 	return exists
 }
 
@@ -46,13 +45,12 @@ prebill_media, prebill_management, bfo_pct, referral_fee, project_prebill_tech, 
 			//Update
 			pstmt, err := db.Prepare(updateStmt)
 			if err != nil {
-				log.Fatal(err)
+				Logger.Fatalw("Preparing upsert statement failed", "error", err, "statement", updateStmt)
 			}
 			var budgetHours float64 = 0
 			if budget.ExternalHourlyHourRate > 0 {
 				budgetHours = math.Round(budget.BillableFees / budget.ExternalHourlyHourRate)
 			}
-
 
 			res, err := pstmt.Exec(budget.Partner, budget.ClientName, budget.ProjectName,
 				budget.Initiative, budget.BudgetMonth(), budget.BillableFees, budget.ClientBudget,
@@ -63,19 +61,19 @@ prebill_media, prebill_management, bfo_pct, referral_fee, project_prebill_tech, 
 				budget.ProjectPrebillTech, budget.ProjectManagementFeeCalc, budget.BudgetId)
 
 			if err != nil {
-				log.Fatal(err)
+				Logger.Fatalw("Executing upsert statement failed", "error", err, "statement", updateStmt)
 			}
 
 			rowCnt, err := res.RowsAffected()
 			if err != nil {
-				log.Fatal(err)
+				Logger.Fatalw("Retrieve RowsAffected Failed", "error", err, "statement", updateStmt)
 			}
-			log.Printf("Updated Budget affected = %d with id: %d and month: %v and month as epoch: %s\n", rowCnt, budget.BudgetId,  budget.BudgetMonth(), budget.Month)
+			Logger.Debugw("Updated Budget", "rowCount", rowCnt, "budgetId", budget.BudgetId, "budgetMonth", budget.BudgetMonth(), "month", budget.Month)
 		} else {
 			//Insert
 			insertStmt, err := db.Prepare(insertStmt)
 			if err != nil {
-				log.Fatal("Error Inserting Budget: ", err)
+				Logger.Fatalw("Error Inserting Budget", "error", err)
 			}
 			var budgetHours float64 = 0
 			if budget.ExternalHourlyHourRate > 0 {
@@ -90,18 +88,14 @@ prebill_media, prebill_management, bfo_pct, referral_fee, project_prebill_tech, 
 				budget.PrebillMedia, budget.PrebillManagement, budget.BfoPct, budget.ReferralFee,
 				budget.ProjectPrebillTech, budget.ProjectManagementFeeCalc)
 			if err != nil {
-				log.Fatal(err)
+				Logger.Fatalw("Inserting Statment Failed", "error", err, "insertStatement", insertStmt)
 			}
 
-			//lastId, err := res.LastInsertId()
-			//if err != nil {
-			//	log.Fatal(err)
-			//}
 			rowCnt, err := res.RowsAffected()
 			if err != nil {
-				log.Fatal(err)
+				Logger.Fatalw("Failed to retrieve RowsAffected", "error", err, "statement", insertStmt)
 			}
-			log.Printf("New Budget affected = %d\n", rowCnt)
+			Logger.Debugw("New Budget affected", "rowCnt", rowCnt)
 		}
 	}
 }

@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 type BudgetDoc struct {
@@ -54,7 +54,7 @@ type Budget struct {
 func UnmarshalBudget(raw string) BudgetDoc {
 	var data BudgetDoc
 	if err := xml.Unmarshal([]byte(raw), &data); err != nil {
-		log.Fatalf("An error occurred unamrshalling the budgets %q", err)
+		Logger.Fatalw("An error occurred unmarshalling the budgets", "error", err)
 	}
 	return data
 }
@@ -99,10 +99,10 @@ func CountQbBudgets(ticket string, table string) ApiCount {
 	client := &http.Client{}
 	pcQuery := CntQuery(ticket, "bue6purcydb2dwcggn43udiycga7")
 	url := fmt.Sprintf("https://befoundonline.quickbase.com/db/%s", table)
-	fmt.Println(bytes.NewBuffer([]byte(pcQuery)))
+	Logger.Debugw("Counting Budgets", "countBudgetsQuery", bytes.NewBuffer([]byte(pcQuery)))
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(pcQuery)))
 	if err != nil {
-		log.Fatal(err)
+		Logger.Fatalw("Creating Count Budgets Request Failed", "error", err)
 	}
 
 	req.Header.Add("content-type", "application/xml")
@@ -111,7 +111,7 @@ func CountQbBudgets(ticket string, table string) ApiCount {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		Logger.Fatalw("Count Budgets Post Failed", "error", err)
 	}
 
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)
@@ -144,8 +144,7 @@ func Auth(username string, password string) AuthResult {
 	url := "https://befoundonline.quickbase.com/db/main"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(body)))
 	if err != nil {
-		fmt.Printf("An error ocurred when creating a request to retrieve a ticket")
-		log.Fatal(err)
+		Logger.Fatalw("An error occurred when creating a request to retrieve a ticket", "error", err)
 	}
 
 	req.Header.Add("content-type", "application/xml")
@@ -154,12 +153,12 @@ func Auth(username string, password string) AuthResult {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		Logger.Fatalw("Auth Post failed", "error", err)
 	}
 	defer func() {
 		err = resp.Body.Close()
 		if err != nil {
-			log.Fatal(err)
+			Logger.Fatalw("Crashed while closing the body for the auth response", "error", err)
 		}
 	}()
 
@@ -168,8 +167,7 @@ func Auth(username string, password string) AuthResult {
 	var result AuthResult
 	err = xml.Unmarshal([]byte(bodyString), &result)
 	if err != nil {
-		log.Printf("Failed ot unmarshal the auth body: %s", bodyString)
-		log.Fatal(err)
+		Logger.Fatalw("Failed ot unmarshal the auth body", "error", err)
 	}
 	return result
 }
@@ -186,11 +184,11 @@ func authBody(username string, password string) string {
 func GetBudgets(ticket string, table string, size int, offset int) BudgetDoc {
 	client := &http.Client{}
 	pcQuery := BudgetQuery(ticket, size, offset)
-	log.Printf("QUERY: %s", pcQuery)
+	Logger.Debugw("Get Budgets Query", "query", pcQuery)
 	baseUrl := fmt.Sprintf("https://befoundonline.quickbase.com/db/%s", table)
 	req, err := http.NewRequest("POST", baseUrl, bytes.NewBuffer([]byte(pcQuery)))
 	if err != nil {
-		log.Fatal(err)
+		Logger.Fatalw("Creating Request for Retrieving Budgets Failed", "error", err)
 	}
 
 	req.Header.Add("content-type", "application/xml")
@@ -199,7 +197,7 @@ func GetBudgets(ticket string, table string, size int, offset int) BudgetDoc {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		Logger.Fatalw("Posting Request for GetBudgets Failed", "error", err)
 	}
 
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)
