@@ -1,8 +1,6 @@
 package budgets
 
 import (
-	"log"
-
 	"go.uber.org/zap"
 )
 
@@ -11,8 +9,8 @@ var Logger *zap.SugaredLogger
 func ProductionLogger() {
 
 	cf := zap.NewProductionConfig()
-	cf.OutputPaths = []string{"stdout", "/tmp/qbbudgets"}
-	cf.ErrorOutputPaths = []string{"stderr", "/tmp/qbbudgets"}
+	cf.OutputPaths = []string{"/var/log/qbbudgets/logs"}
+	cf.ErrorOutputPaths = []string{"/var/log/qbbudgets/logs"}
 	cf.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	cf.Encoding = "json"
 	logg, err := cf.Build()
@@ -21,7 +19,6 @@ func ProductionLogger() {
 	}
 
 	Logger = logg.Sugar()
-	log.Printf("Logger is: %v", Logger)
 }
 
 func DevelopmentLogger() {
