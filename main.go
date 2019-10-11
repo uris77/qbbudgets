@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	budgets.SetupLogger()
+	budgets.ProductionLogger()
 	defer budgets.Logger.Sync()
 	cnf := budgets.ReadConf("prod")
 	connstr := fmt.Sprintf("user=%s dbname=%s password=%s host=%s sslmode=disable", cnf.DbUser, cnf.DbName, cnf.DbPassword, cnf.DbHost)

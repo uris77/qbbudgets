@@ -9,14 +9,11 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"go.uber.org/zap"
 )
 
-var sugar *zap.SugaredLogger
-
 func init() {
-	sugar = zap.NewExample().Sugar()
-	defer sugar.Sync()
+	DevelopmentLogger()
+	defer Logger.Sync()
 }
 
 func TestUnmarshalBudget(t *testing.T) {
@@ -231,7 +228,7 @@ func TestUnmarshalBudget(t *testing.T) {
 	budgets := UnmarshalBudget(sample)
 	budget := budgets.Budgets[0]
 	fmt.Printf("\n\n Client Budget: %v\n", budget.ClientBudget)
-	sugar.Infow("Client Budget", "ClientBudget", budget.ClientBudget)
+	Logger.Infow("Client Budget", "ClientBudget", budget.ClientBudget)
 	if budget.InitiativeBillable != true {
 		t.Errorf("Initiative Billable should be true, but got %v", budget.InitiativeBillable)
 	}

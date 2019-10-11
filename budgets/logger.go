@@ -8,7 +8,7 @@ import (
 
 var Logger *zap.SugaredLogger
 
-func SetupLogger() {
+func ProductionLogger() {
 
 	cf := zap.NewProductionConfig()
 	cf.OutputPaths = []string{"stdout", "/tmp/qbbudgets"}
@@ -22,4 +22,8 @@ func SetupLogger() {
 
 	Logger = logg.Sugar()
 	log.Printf("Logger is: %v", Logger)
+}
+
+func DevelopmentLogger() {
+	Logger = zap.NewExample().Sugar()
 }
