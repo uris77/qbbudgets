@@ -2,8 +2,8 @@ package budgets
 
 import (
 	"fmt"
+
 	"github.com/spf13/viper"
-	"log"
 )
 
 type qbaseConf struct {
@@ -18,13 +18,13 @@ type qbaseConf struct {
 }
 
 func ReadConf(stage string) qbaseConf {
-	viper.AddConfigPath("$HOME/.private")
-	viper.AddConfigPath("./")
-	viper.SetConfigName("qbase")
+	viper.SetConfigFile("/home/ec2-user/.private/qbase.yaml")
+
+	Logger.Debugw("Config file Used", "file", viper.ConfigFileUsed())
 
 	// Find and read the config file
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file, %s", err)
+		Logger.Fatalw("Error reading config file", "err", err)
 	}
 	// Confirm which config file is used
 	fmt.Printf("Using config: %s\n", viper.ConfigFileUsed())
@@ -33,7 +33,7 @@ func ReadConf(stage string) qbaseConf {
 	var C qbaseConf
 	err := v.Unmarshal(&C)
 	if err != nil {
-		log.Fatalf("unable to decode configuration for quickbase into a struct, %v", err)
+		Logger.Fatalw("unable to decode configuration for quickbase into a struct", "err", err)
 	}
 	return C
 }
